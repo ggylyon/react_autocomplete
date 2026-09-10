@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import './App.scss';
 import { peopleFromServer } from './data/people';
-import classNames from 'classnames';
+import { Autocomplete } from './components/Autocomplete';
 
 type Person = {
   name: string;
@@ -28,14 +28,14 @@ function debounce(
   };
 }
 
-export const App: React.FC = () => {
+export const App: React.FC<number> = defaultDelay => {
   const [suggestion, setSuggestion] = useState('');
   const [appliedSuggestion, setAppliedSuggestion] = useState('');
 
   const [isFocused, setIsFocused] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
-  const [delay, setDelay] = useState(300);
+  const [delay, setDelay] = useState(defaultDelay || 0);
 
   const applySuggestion = useCallback(debounce(setAppliedSuggestion, delay), [
     delay,
@@ -93,44 +93,19 @@ export const App: React.FC = () => {
               data-cy="search-input"
               value={suggestion}
               onChange={event => handleChange(event)}
-              onFocus={() => {
-                applySuggestion(suggestion);
+              onFocus={event => {
+                applySuggestion(event.target.value);
 
                 setIsFocused(true);
               }}
             />
           </div>
 
-          {isFocused && filteredSuggestions.length > 0 && (
-            <div
-              className="dropdown-menu"
-              role="menu"
-              data-cy="suggestions-list"
-            >
-              <div className="dropdown-content">
-                {filteredSuggestions.map(person => {
-                  return (
-                    <div
-                      className="dropdown-item"
-                      data-cy="suggestion-item"
-                      key={person.slug}
-                      onClick={() => onSelected(person)}
-                    >
-                      <p
-                        className={classNames(
-                          person.sex === 'm'
-                            ? 'has-text-link'
-                            : 'has-text-danger',
-                        )}
-                      >
-                        {person.name}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <Autocomplete
+            isFocused={isFocused}
+            filteredSuggestions={filteredSuggestions}
+            onSelected={onSelected}
+          />
         </div>
 
         {isFocused && filteredSuggestions.length <= 0 && (
