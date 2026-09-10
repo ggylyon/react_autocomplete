@@ -20,7 +20,7 @@ function debounce(
   let timer = 0;
 
   return (input: string) => {
-    window.clearInterval(timer);
+    window.clearTimeout(timer);
 
     timer = window.setTimeout(() => {
       callback(input);
@@ -35,7 +35,11 @@ export const App: React.FC = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
-  const applySuggestion = useCallback(debounce(setAppliedSuggestion, 300), []);
+  const [delay, setDelay] = useState(300);
+
+  const applySuggestion = useCallback(debounce(setAppliedSuggestion, delay), [
+    delay,
+  ]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSuggestion(event.target.value);
@@ -45,12 +49,22 @@ export const App: React.FC = () => {
   };
 
   const filteredSuggestions = useMemo(() => {
+    if (!appliedSuggestion.trim()) {
+      return peopleFromServer;
+    }
+
     return peopleFromServer.filter(person => {
       return person.name
         .toLowerCase()
         .includes(appliedSuggestion.trim().toLowerCase());
     });
   }, [appliedSuggestion]);
+
+  const onSelected = (person: Person) => {
+    setSuggestion(person.name);
+    setSelectedPerson(person);
+    setIsFocused(false);
+  };
 
   return (
     <div className="container">
@@ -60,6 +74,15 @@ export const App: React.FC = () => {
             ? `${selectedPerson.name} (${selectedPerson.born} - ${selectedPerson.died})`
             : 'No selected person'}
         </h1>
+
+        <input
+          type="number"
+          placeholder="Enter a delay"
+          className="input delay-input"
+          value={delay}
+          onChange={event => setDelay(Number(event.target.value))}
+          step={25}
+        />
 
         <div className="dropdown is-active">
           <div className="dropdown-trigger">
@@ -91,11 +114,7 @@ export const App: React.FC = () => {
                       className="dropdown-item"
                       data-cy="suggestion-item"
                       key={person.slug}
-                      onClick={() => {
-                        setSuggestion(person.name);
-                        setSelectedPerson(person);
-                        setIsFocused(false);
-                      }}
+                      onClick={() => onSelected(person)}
                     >
                       <p
                         className={classNames(
