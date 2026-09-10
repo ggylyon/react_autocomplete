@@ -70,7 +70,11 @@ export const App: React.FC = () => {
               data-cy="search-input"
               value={suggestion}
               onChange={event => handleChange(event)}
-              onFocus={() => setIsFocused(true)}
+              onFocus={() => {
+                applySuggestion(suggestion);
+
+                setIsFocused(true);
+              }}
             />
           </div>
 
@@ -88,6 +92,7 @@ export const App: React.FC = () => {
                       data-cy="suggestion-item"
                       key={person.slug}
                       onClick={() => {
+                        setSuggestion(person.name);
                         setSelectedPerson(person);
                         setIsFocused(false);
                       }}
